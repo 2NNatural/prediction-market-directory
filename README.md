@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prediction Market Directory
 
-## Getting Started
+A live, filterable, poly-functional map of the prediction market application layer — built so every app can carry multiple tags across 5 independent dimensions simultaneously.
 
-First, run the development server:
+**Status:** Phase 1 complete (MVP live locally). Scraping pipeline built. Pending Vercel deployment.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What It Does
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+A directory where every prediction market app is tagged across 5 dimensions (Content, Instrument, Execution, Interface, Resolution). Users can filter by any combination. Apps can — and should — appear in multiple categories at once.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Built for the prediction market research community, DeFi explorers, and anyone trying to understand the current ecosystem.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Quick Start
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
+- 64-bit Node.js (`node -p "process.arch"` must print `x64`)
+- A Supabase project (free tier)
+- An Anthropic API key (for the AI scraping pipeline)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Setup
 
-## Deploy on Vercel
+1. **Clone and install**
+   ```bash
+   git clone <repo>
+   cd prediction-market-directory
+   npm install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Create `.env.local`**
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_public_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Run database migrations** (in Supabase SQL Editor, in order):
+   - `supabase/schema.sql`
+   - `supabase/seed.sql`
+   - `supabase/migrations/add-status-column.sql`
+
+4. **Start dev server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Docs
+
+| File | Purpose |
+|------|---------|
+| [CLAUDE.md](CLAUDE.md) | AI context doc — full technical spec, architecture decisions, taxonomy |
+| [CONTEXT.md](CONTEXT.md) | Project memory — upload this to start a new Claude session |
+| [PROGRESS.md](PROGRESS.md) | Changelog — what was built, session by session |
+| [ROADMAP.md](ROADMAP.md) | What's next — single canonical priority list |

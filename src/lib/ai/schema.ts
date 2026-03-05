@@ -1,0 +1,46 @@
+import { z } from 'zod';
+import {
+  CONTENT_TAGS,
+  INSTRUMENT_TAGS,
+  EXECUTION_TAGS,
+  INTERFACE_TAGS,
+  RESOLUTION_TAGS,
+} from '@/types';
+
+// Build Zod enums from the canonical tag constants in types/index.ts.
+// This ensures the LLM output is validated against the exact same values
+// enforced by the DB CHECK constraints.
+const contentEnum = z.enum(CONTENT_TAGS);
+const instrumentEnum = z.enum(INSTRUMENT_TAGS);
+const executionEnum = z.enum(EXECUTION_TAGS);
+const interfaceEnum = z.enum(INTERFACE_TAGS);
+const resolutionEnum = z.enum(RESOLUTION_TAGS);
+
+export const applicationAnalysisSchema = z.object({
+  name: z.string().describe('The official name of the application'),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be a URL-safe lowercase slug')
+    .describe('URL-safe lowercase slug, e.g. "polymarket" or "billy-bets"'),
+  description: z
+    .string()
+    .max(300)
+    .describe('One sentence describing what this application does in the prediction market context'),
+  content_tags: z
+    .array(contentEnum)
+    .describe('Which market subjects this app covers'),
+  instrument_tags: z
+    .array(instrumentEnum)
+    .describe('Which financial contract types this app uses'),
+  execution_tags: z
+    .array(executionEnum)
+    .describe('How prices are determined and orders matched'),
+  interface_tags: z
+    .array(interfaceEnum)
+    .describe('How users interact with this platform'),
+  resolution_tags: z
+    .array(resolutionEnum)
+    .describe('How market outcomes are determined'),
+});
+
+export type ApplicationAnalysis = z.infer<typeof applicationAnalysisSchema>;
