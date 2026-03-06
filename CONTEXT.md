@@ -127,6 +127,14 @@ The single source of truth for valid tag values is `src/types/index.ts`. DB CHEC
 
 **Service role client for INSERT** — RLS allows public SELECT only. API route uses `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `NEXT_PUBLIC_`) via `src/lib/supabase/service.ts`.
 
+**Favicon via Google API, no Next.js Image** — AppCard uses plain `<img>` with `src=https://www.google.com/s2/favicons?domain=${domain}&sz=128` and `onError` letter fallback. Deliberately avoids Next.js `<Image>` to skip needing domain allowlisting in `next.config.ts`.
+
+**SubmitAppForm trigger prop pattern** — `SubmitAppForm` accepts an optional `trigger?: React.ReactNode`. If provided, wraps it in `<DialogTrigger asChild>`. If not, renders the default pill button. All dialog logic stays in one component; any element in the app can open it.
+
+**Flat tag display on AppCard** — All tags rendered in a single `flex-wrap` row regardless of dimension. Active filter tags highlight as `bg-[#0A0A0A] text-white`; inactive as `bg-gray-100 text-gray-800`. `activeTagSet` built as a `Set` across all active filter arrays for O(1) lookup.
+
+**shadcn components replaced in filter UI** — `Checkbox`, `Separator`, `ScrollArea`, and `Button` from shadcn removed from `FilterGroup.tsx` and `FilterSidebar.tsx`. Replaced with pure Tailwind. Keeps the filter UI dependency-free.
+
 ---
 
 ## Key File Map
@@ -141,15 +149,19 @@ src/lib/scraper.ts                         ← jina.ai URL scraper
 src/lib/ai/schema.ts                       ← Zod schema for LLM output
 src/lib/ai/prompt.ts                       ← System prompt with taxonomy rules
 src/lib/utils.ts                           ← cn(), parseSearchParams(), buildFilterUrl(), toggleTag()
+src/app/globals.css                        ← Tailwind + shadcn CSS vars + .custom-scrollbar utility
+src/app/layout.tsx                         ← Root layout: Inter font, Navbar, bg-[#FAFAFA] body
 src/app/directory/page.tsx                 ← Server: reads searchParams, fetches, renders
 src/app/api/analyze/route.ts               ← POST: scrape → classify → insert as pending
-src/components/directory/FilterSidebar.tsx ← Client: URL push on checkbox change
-src/components/directory/AppCard.tsx       ← Client: card with badges
-src/components/directory/AppGrid.tsx       ← Server: responsive card grid
-src/components/directory/SubmitAppForm.tsx ← Client: dialog form for URL submission
+src/components/Navbar.tsx                  ← Client: sticky nav with logo, links, Submit App trigger
+src/components/directory/FilterSidebar.tsx ← Client: URL push on checkbox change, sticky positioning
+src/components/directory/FilterGroup.tsx   ← Client: pure Tailwind checkbox list per dimension
+src/components/directory/AppCard.tsx       ← Client: card with Google favicon + letter fallback, flat tags
+src/components/directory/AppGrid.tsx       ← Server: responsive card grid + SubmitAppForm dashed card
+src/components/directory/SubmitAppForm.tsx ← Client: dialog with optional trigger prop
 supabase/schema.sql                        ← Full DDL
-supabase/seed.sql                          ← 3 seed apps (Polymarket, Sharpe.ai, Billy Bets)
-supabase/migrations/add-status-column.sql  ← Migration: adds status column
+supabase/seed.sql                          ← Seed apps (Polymarket, Sharpe.ai, Billy Bets + more)
+supabase/migrations/add-status-column.sql  ← Migration: adds status column (already run)
 ```
 
 ---
@@ -165,14 +177,15 @@ ANTHROPIC_API_KEY=sk-ant-...                               # server-only, AI cla
 ```
 
 Get Supabase keys from: Dashboard → Settings → API. Use the **anon/public** key for `ANON_KEY`, the **service_role** key for `SERVICE_ROLE_KEY`.
-Get Anthropic key from: [console.anthropic.com](https://console.anthropic.com). Free $5 credit on signup. ~$0.003 per URL classification.
+Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003 per URL classification.
 
 ---
 
-## Current Status (as of 2026-03-04)
+## Current Status (as of 2026-03-06)
 
 - Phase 1 (MVP directory): **Complete**
-- Scraping & AI tagging pipeline: **Complete** — needs DB migration + env vars to activate
+- Scraping & AI tagging pipeline: **Complete and live** — migration run, env vars set, tested and working
+- Frontend overhaul: **Complete** — new Navbar, favicon cards, dashed submit card, pure Tailwind filter UI
 - Deployment: **Not done** — local only
 - Admin portal: **Not built** — manual approval via Supabase Table Editor
 
@@ -184,8 +197,9 @@ Get Anthropic key from: [console.anthropic.com](https://console.anthropic.com). 
 ### Known Limitations
 - Rate limiting is in-memory (`Map`) — resets on every server restart/cold start (not production-grade)
 - No email notifications when submissions are approved
-- No logo/favicon fetching (logo_url is null for all submitted apps)
+- `logo_url` is null for all rows — favicons are derived live from the URL field, not stored
 - `urlCooldowns` Map is not shared across serverless function instances on Vercel
+- Navbar "About" and "Newsletter" links are `href="#"` placeholders
 
 ---
 

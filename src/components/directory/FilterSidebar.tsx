@@ -1,8 +1,6 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
 import { FilterGroup } from './FilterGroup';
 import { buildFilterUrl, toggleTag } from '@/lib/utils';
 import { DIMENSION_CONFIGS } from '@/types';
@@ -32,35 +30,29 @@ export function FilterSidebar({ activeFilters }: FilterSidebarProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-          Filters
-        </h2>
+    <div className="w-64 flex-shrink-0 hidden lg:block sticky top-24 h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar pb-10">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Filters</h3>
         {totalActive > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={handleClearAll}
-            className="text-xs h-7"
+            className="text-xs text-gray-400 hover:text-black transition-colors"
           >
-            Clear all ({totalActive})
-          </Button>
+            Reset
+          </button>
         )}
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
-          {DIMENSION_CONFIGS.map((dim) => (
-            <FilterGroup
-              key={dim.key}
-              config={dim}
-              selected={activeFilters[dim.key] as string[]}
-              onToggle={(tag) => handleToggle(dim.key, tag)}
-            />
-          ))}
-        </div>
-      </ScrollArea>
+      <div className="space-y-8">
+        {DIMENSION_CONFIGS.map((dim) => (
+          <FilterGroup
+            key={dim.key}
+            config={dim}
+            selected={activeFilters[dim.key] as string[]}
+            onToggle={(tag) => handleToggle(dim.key, tag)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

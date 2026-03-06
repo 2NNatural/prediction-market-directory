@@ -2,7 +2,7 @@
 
 A live, filterable, poly-functional map of the prediction market application layer — built so every app can carry multiple tags across 5 independent dimensions simultaneously.
 
-**Status:** Phase 1 complete (MVP live locally). Scraping pipeline built. Pending Vercel deployment.
+**Status:** Phase 1 + scraping pipeline complete. Frontend overhaul complete. Pending Vercel deployment.
 
 ---
 

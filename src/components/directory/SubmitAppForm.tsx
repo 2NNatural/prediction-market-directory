@@ -20,7 +20,11 @@ type SubmitState =
   | { phase: 'success'; app: Application }
   | { phase: 'error'; message: string };
 
-export function SubmitAppForm() {
+interface SubmitAppFormProps {
+  trigger?: React.ReactNode;
+}
+
+export function SubmitAppForm({ trigger }: SubmitAppFormProps = {}) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [state, setState] = useState<SubmitState>({ phase: 'idle' });
@@ -65,9 +69,11 @@ export function SubmitAppForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          Submit App
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm">
+            Submit App
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className="max-w-lg">

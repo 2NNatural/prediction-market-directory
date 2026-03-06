@@ -6,25 +6,15 @@ Single canonical priority list. No competing roadmaps exist in other files.
 
 ## [NEXT] — Do These Now
 
-### Activate the scraping pipeline
-The code is built but needs the database migration and env vars to work.
-1. Run `supabase/migrations/add-status-column.sql` in Supabase SQL Editor
-2. Add to `.env.local`:
-   ```
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   ANTHROPIC_API_KEY=sk-ant-...
-   ```
-3. Test: submit a URL, confirm pending row appears in Supabase, approve it, confirm it appears in directory
-
 ### Add 10-15 real seed apps
-The directory currently has 3 apps. It needs critical mass to be useful.
-Apps to add: Augur, Manifold, Metaculus, Kalshi, Hedgehog Markets, Gnosis, Zeitgeist, dYdX Prediction, Limitless, Drift Protocol, Azuro, Overtime Markets, Polymarket (already seeded)
+The directory has a small number of apps. It needs critical mass to be useful.
+Apps to add: Augur, Manifold, Metaculus, Kalshi, Hedgehog Markets, Gnosis, Zeitgeist, dYdX Prediction, Limitless, Drift Protocol, Azuro, Overtime Markets.
 Edit `supabase/seed.sql` or insert directly via Supabase Table Editor.
 
 ### Deploy to Vercel
 1. Push repo to GitHub
 2. Connect to Vercel (vercel.com → Import Project)
-3. Add env vars in Vercel dashboard (all 4 from `.env.local`)
+3. Add all 4 env vars in Vercel dashboard (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`)
 4. Deploy — get a live URL
 
 ---
@@ -32,18 +22,21 @@ Edit `supabase/seed.sql` or insert directly via Supabase Table Editor.
 ## [SOON] — Do These Next
 
 ### Admin portal (`/admin`)
-Protected route where you can approve/reject pending submissions without touching Supabase dashboard.
+Protected route to approve/reject pending submissions without touching Supabase dashboard.
 - List of all pending submissions with their AI-generated tags
 - Approve / Reject buttons per row
-- Needs Supabase Auth (email/password or magic link for simplicity)
+- Needs Supabase Auth (email/password or magic link)
 - Form to manually add apps (driven by `DIMENSION_CONFIGS` tag pickers)
-- This replaces the current manual Supabase Table Editor workflow
+- Replaces the current manual Supabase Table Editor workflow
 
 ### App detail page (`/directory/[slug]`)
 - Server component fetching single app by slug
 - Full description, all tags with dimension labels
 - External link button
 - "Related apps" section (apps sharing ≥1 tag in any dimension)
+
+### Wire up Navbar links
+"About" and "Newsletter" are currently `href="#"` placeholders. Build or link out to actual pages/forms.
 
 ---
 
@@ -57,9 +50,9 @@ Replace or complement the card grid with `react-force-graph-2d`.
 - Toggle between "Grid view" and "Graph view"
 - Active `FilterState` drives which subgraph is visible
 
-### Logo / favicon fetching
-Auto-fetch favicons for submitted apps to populate `logo_url`.
-Could use `https://www.google.com/s2/favicons?domain=example.com` as a quick solution.
+### Store favicon / logo in `logo_url`
+Currently favicons are fetched live from Google's API on every card render using the `url` field. `logo_url` is null for all rows.
+Option: at submission time, fetch and store the favicon URL so it persists even if the app's domain changes.
 
 ---
 

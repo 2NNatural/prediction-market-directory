@@ -2,7 +2,6 @@ import { parseSearchParams } from '@/lib/utils';
 import { fetchApplications } from '@/lib/queries/applications';
 import { FilterSidebar } from '@/components/directory/FilterSidebar';
 import { AppGrid } from '@/components/directory/AppGrid';
-import { SubmitAppForm } from '@/components/directory/SubmitAppForm';
 import type { FilterState } from '@/types';
 
 interface PageProps {
@@ -15,27 +14,30 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
   const applications = await fetchApplications(filters);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-8 flex gap-12">
       {/* Sidebar */}
-      <aside className="w-72 shrink-0 border-r border-border bg-muted/30">
-        <FilterSidebar activeFilters={filters} />
-      </aside>
+      <FilterSidebar activeFilters={filters} />
 
       {/* Main content */}
-      <main className="flex-1 p-6">
-        <header className="mb-6 flex items-start justify-between gap-4">
+      <main className="flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8 pb-6 border-b border-gray-200">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A] mb-2">
               Prediction Market Directory
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-gray-500 font-medium">
               {applications.length} application{applications.length !== 1 ? 's' : ''} found
             </p>
           </div>
-          <SubmitAppForm />
-        </header>
+        </div>
 
         <AppGrid applications={applications} activeFilters={filters} />
+
+        <div className="mt-12 text-center pb-8">
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} Prediction Market Directory. All rights reserved.
+          </p>
+        </div>
       </main>
     </div>
   );
