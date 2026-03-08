@@ -7,6 +7,7 @@ export async function fetchApplications(filters: FilterState): Promise<Applicati
   let query = supabase
     .from('applications')
     .select('*')
+    .eq('status', 'approved')
     .order('name', { ascending: true });
 
   // AND across dimensions, OR within each dimension

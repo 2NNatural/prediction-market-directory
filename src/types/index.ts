@@ -28,6 +28,11 @@ export type ResolutionTag = typeof RESOLUTION_TAGS[number];
 
 export type DimensionKey = 'content' | 'instrument' | 'execution' | 'interface' | 'resolution';
 
+// ─── Application Status ───────────────────────────────────────────
+
+export const APPLICATION_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export type ApplicationStatus = typeof APPLICATION_STATUSES[number];
+
 // ─── Application ──────────────────────────────────────────────────
 
 export interface Application {
@@ -42,6 +47,7 @@ export interface Application {
   execution_tags: ExecutionTag[];
   interface_tags: InterfaceTag[];
   resolution_tags: ResolutionTag[];
+  status: ApplicationStatus;
   created_at: string;
   updated_at: string;
 }
