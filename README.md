@@ -2,7 +2,7 @@
 
 A live, filterable, poly-functional map of the prediction market application layer — built so every app can carry multiple tags across 5 independent dimensions simultaneously.
 
-**Status:** Phase 1 + scraping pipeline complete. Frontend overhaul complete. Pending Vercel deployment.
+**Status:** Phase 1 + scraping pipeline + frontend overhaul + mobile responsive + bulk seeding complete. Live deployment exists. Admin portal pending.
 
 ---
 
@@ -48,6 +48,12 @@ Built for the prediction market research community, DeFi explorers, and anyone t
    npm run dev
    ```
    Open [http://localhost:3000](http://localhost:3000)
+
+### Bulk seed (optional)
+With the dev server running in one terminal:
+```bash
+npx tsx scripts/bulk-seed.ts
+```
 
 ---
 

@@ -63,6 +63,12 @@ Always confirm the working directory context. Working directory: `/Users/noahner
 
 ---
 
+## API Route Name — Critical Note
+
+The scraping/classification route is at **`/api/analyze`** (file: `src/app/api/analyze/route.ts`). The user has referred to it as `/api/scrape` in mission briefs. There is **no `/api/scrape` route** — it does not exist. Always use `/api/analyze`.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Version |
@@ -80,7 +86,10 @@ Always confirm the working directory context. Working directory: `/Users/noahner
 | Schema Validation | zod | ^4.3.6 |
 | Deployment target | Vercel | — |
 | Scraping | jina.ai reader (no dependency) | — |
+| Script runner | tsx (via npx, no install) | — |
 | Future visualization | react-force-graph-2d | not installed yet |
+
+**shadcn components installed:** badge, card, checkbox, scroll-area, separator, button, input, dialog, sheet
 
 **AI Model in use:** `claude-sonnet-4-5` via `generateObject`
 
@@ -133,35 +142,45 @@ The single source of truth for valid tag values is `src/types/index.ts`. DB CHEC
 
 **Flat tag display on AppCard** — All tags rendered in a single `flex-wrap` row regardless of dimension. Active filter tags highlight as `bg-[#0A0A0A] text-white`; inactive as `bg-gray-100 text-gray-800`. `activeTagSet` built as a `Set` across all active filter arrays for O(1) lookup.
 
-**shadcn components replaced in filter UI** — `Checkbox`, `Separator`, `ScrollArea`, and `Button` from shadcn removed from `FilterGroup.tsx` and `FilterSidebar.tsx`. Replaced with pure Tailwind. Keeps the filter UI dependency-free.
+**shadcn components replaced in filter UI** — `Checkbox`, `Separator`, `ScrollArea`, and `Button` from shadcn removed from `FilterGroup.tsx` and `FilterSidebar.tsx`. Replaced with pure Tailwind. Sheet (from shadcn) IS used for the mobile drawer.
+
+**Order-Routing Test** — AI guardrail in the analyze pipeline that rejects sites which don't actually execute trades. `isValidApplication: boolean` and optional `rejectReason` added to the Zod schema. The 5 tag dimensions are wrapped in an optional `dimensions` object — only filled if `isValidApplication` is true. Rejected sites: logged to console, return 200 `{ message, reason }`, NOT inserted into Supabase. Contact email in reject reason: `nneri@usc.edu`.
+
+**URL normalization before dedup check** — Incoming URLs are parsed with `new URL()` and reconstructed as `origin + pathname.replace(/\/+$/, '') + search + hash` before the duplicate check. Prevents `https://polymarket.com` and `https://polymarket.com/` from being treated as different URLs.
+
+**Mobile filter sheet** — `MobileFilterSheet.tsx` uses URL-driven filter state (same as desktop sidebar), so no state-lifting is needed. Both components stay in sync via URL params automatically. Sheet closes after each filter toggle to show results immediately.
+
+**Bulk seed script** — `scripts/bulk-seed.ts` calls the same `/api/analyze` API route that the frontend uses. All safeguards (duplicate check, rate limiting, Order-Routing Test) apply identically. Run with `npx tsx scripts/bulk-seed.ts` while dev server is running. Logs 4 outcomes: ✓ Accepted, ↷ Skipped, ↷ Duplicate, ✗ Failed.
 
 ---
 
 ## Key File Map
 
 ```
-src/types/index.ts                          ← SINGLE SOURCE OF TRUTH for all tags and types
-src/lib/queries/applications.ts            ← Main DB query (filters by status='approved')
-src/lib/supabase/server.ts                 ← Server component Supabase client
-src/lib/supabase/service.ts                ← Service role client (INSERT, bypasses RLS)
-src/lib/supabase/client.ts                 ← Browser Supabase client
-src/lib/scraper.ts                         ← jina.ai URL scraper
-src/lib/ai/schema.ts                       ← Zod schema for LLM output
-src/lib/ai/prompt.ts                       ← System prompt with taxonomy rules
-src/lib/utils.ts                           ← cn(), parseSearchParams(), buildFilterUrl(), toggleTag()
-src/app/globals.css                        ← Tailwind + shadcn CSS vars + .custom-scrollbar utility
-src/app/layout.tsx                         ← Root layout: Inter font, Navbar, bg-[#FAFAFA] body
-src/app/directory/page.tsx                 ← Server: reads searchParams, fetches, renders
-src/app/api/analyze/route.ts               ← POST: scrape → classify → insert as pending
-src/components/Navbar.tsx                  ← Client: sticky nav with logo, links, Submit App trigger
-src/components/directory/FilterSidebar.tsx ← Client: URL push on checkbox change, sticky positioning
-src/components/directory/FilterGroup.tsx   ← Client: pure Tailwind checkbox list per dimension
-src/components/directory/AppCard.tsx       ← Client: card with Google favicon + letter fallback, flat tags
-src/components/directory/AppGrid.tsx       ← Server: responsive card grid + SubmitAppForm dashed card
-src/components/directory/SubmitAppForm.tsx ← Client: dialog with optional trigger prop
-supabase/schema.sql                        ← Full DDL
-supabase/seed.sql                          ← Seed apps (Polymarket, Sharpe.ai, Billy Bets + more)
-supabase/migrations/add-status-column.sql  ← Migration: adds status column (already run)
+src/types/index.ts                               ← SINGLE SOURCE OF TRUTH for all tags and types
+src/lib/queries/applications.ts                 ← Main DB query (filters by status='approved')
+src/lib/supabase/server.ts                      ← Server component Supabase client
+src/lib/supabase/service.ts                     ← Service role client (INSERT, bypasses RLS)
+src/lib/supabase/client.ts                      ← Browser Supabase client
+src/lib/scraper.ts                              ← jina.ai URL scraper
+src/lib/ai/schema.ts                            ← Zod schema: isValidApplication, rejectReason, dimensions (optional)
+src/lib/ai/prompt.ts                            ← System prompt with taxonomy rules + Order-Routing Test
+src/lib/utils.ts                                ← cn(), parseSearchParams(), buildFilterUrl(), toggleTag()
+src/app/globals.css                             ← Tailwind + shadcn CSS vars + .custom-scrollbar utility
+src/app/layout.tsx                              ← Root layout: Inter font, Navbar, bg-[#FAFAFA] body
+src/app/directory/page.tsx                      ← Server: reads searchParams, fetches, renders
+src/app/api/analyze/route.ts                    ← POST /api/analyze: normalize URL → dedup → scrape → classify → insert
+src/components/Navbar.tsx                       ← Client: sticky nav with logo + Submit App button only
+src/components/directory/FilterSidebar.tsx      ← Client: desktop-only (hidden lg:block), URL push on toggle
+src/components/directory/FilterGroup.tsx        ← Client: pure Tailwind checkbox list per dimension
+src/components/directory/MobileFilterSheet.tsx  ← Client: mobile-only (lg:hidden), shadcn Sheet drawer
+src/components/directory/AppCard.tsx            ← Client: card with Google favicon + letter fallback, flat tags
+src/components/directory/AppGrid.tsx            ← Server: responsive card grid + SubmitAppForm dashed card
+src/components/directory/SubmitAppForm.tsx      ← Client: dialog with optional trigger prop, handles rejected phase
+scripts/bulk-seed.ts                            ← Script: loops TARGET_URLS, POST to /api/analyze, 5s delay, 4 outcome states
+supabase/schema.sql                             ← Full DDL
+supabase/seed.sql                               ← Seed apps
+supabase/migrations/add-status-column.sql       ← Migration: adds status column (already run)
 ```
 
 ---
@@ -181,12 +200,15 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 
 ---
 
-## Current Status (as of 2026-03-06)
+## Current Status (as of 2026-03-09)
 
 - Phase 1 (MVP directory): **Complete**
-- Scraping & AI tagging pipeline: **Complete and live** — migration run, env vars set, tested and working
-- Frontend overhaul: **Complete** — new Navbar, favicon cards, dashed submit card, pure Tailwind filter UI
-- Deployment: **Not done** — local only
+- Scraping & AI tagging pipeline: **Complete and live**
+- Frontend overhaul: **Complete**
+- Mobile responsive filter: **Complete** — shadcn Sheet drawer on mobile
+- Order-Routing Test guardrail: **Complete** — non-execution apps rejected pre-insert
+- Bulk seed script: **Complete** — `scripts/bulk-seed.ts`, 200 URLs queued and being processed
+- Deployment: **Live** — https://prediction-market-directory.vercel.app/directory
 - Admin portal: **Not built** — manual approval via Supabase Table Editor
 
 ### Manual Approval Workflow (until admin portal exists)
@@ -199,7 +221,7 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 - No email notifications when submissions are approved
 - `logo_url` is null for all rows — favicons are derived live from the URL field, not stored
 - `urlCooldowns` Map is not shared across serverless function instances on Vercel
-- Navbar "About" and "Newsletter" links are `href="#"` placeholders
+- jina.ai: if it's down, submissions fail with 502; no fallback
 
 ---
 

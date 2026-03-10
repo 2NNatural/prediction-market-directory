@@ -6,20 +6,12 @@ Single canonical priority list. No competing roadmaps exist in other files.
 
 ## [NEXT] — Do These Now
 
-### Add 10-15 real seed apps
-The directory has a small number of apps. It needs critical mass to be useful.
-Apps to add: Augur, Manifold, Metaculus, Kalshi, Hedgehog Markets, Gnosis, Zeitgeist, dYdX Prediction, Limitless, Drift Protocol, Azuro, Overtime Markets.
-Edit `supabase/seed.sql` or insert directly via Supabase Table Editor.
-
-### Deploy to Vercel
-1. Push repo to GitHub
-2. Connect to Vercel (vercel.com → Import Project)
-3. Add all 4 env vars in Vercel dashboard (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`)
-4. Deploy — get a live URL
-
----
-
-## [SOON] — Do These Next
+### Approve pending rows from bulk seed
+The bulk seed script ran 200 URLs through the pipeline. Rows with `status = 'pending'` are sitting in Supabase waiting for review.
+1. Supabase Dashboard → Table Editor → `applications`
+2. Filter by `status = 'pending'`
+3. Approve legitimate apps → change status to `approved`
+4. Reject noise → change status to `rejected`
 
 ### Admin portal (`/admin`)
 Protected route to approve/reject pending submissions without touching Supabase dashboard.
@@ -29,6 +21,10 @@ Protected route to approve/reject pending submissions without touching Supabase 
 - Form to manually add apps (driven by `DIMENSION_CONFIGS` tag pickers)
 - Replaces the current manual Supabase Table Editor workflow
 
+---
+
+## [SOON] — Do These Next
+
 ### App detail page (`/directory/[slug]`)
 - Server component fetching single app by slug
 - Full description, all tags with dimension labels
@@ -36,7 +32,7 @@ Protected route to approve/reject pending submissions without touching Supabase 
 - "Related apps" section (apps sharing ≥1 tag in any dimension)
 
 ### Wire up Navbar links
-"About" and "Newsletter" are currently `href="#"` placeholders. Build or link out to actual pages/forms.
+"About" and "Newsletter" links were removed from the Navbar this session. When ready to add them back (or replace with real content), build or link out to actual pages/forms.
 
 ---
 
@@ -69,8 +65,17 @@ REST endpoint for querying the directory programmatically.
 ### On-chain data integration for automated tag verification
 Use on-chain data (contract calls, event logs) to automatically verify or override AI-generated tags.
 E.g., if a protocol's smart contract is a CLOB, auto-tag it as CLOB regardless of what the AI says.
-Longer-term research task.
 
 ### Rate limiting upgrade
 Replace in-memory `Map` with Upstash Redis for persistent, cross-instance rate limiting.
 Only needed once deployed and getting real traffic.
+
+---
+
+## Done (archived)
+
+- ~~Add 10-15 real seed apps~~ — Superseded by bulk seed script. 200 URLs processed via `scripts/bulk-seed.ts`.
+- ~~Deploy to Vercel~~ — Live deployment confirmed working as of 2026-03-09.
+- ~~Mobile responsive filter sidebar~~ — Completed 2026-03-09. shadcn Sheet drawer on mobile.
+- ~~Bulk seed script~~ — Completed 2026-03-09. `scripts/bulk-seed.ts`.
+- ~~Order-Routing Test guardrail~~ — Completed 2026-03-09. AI rejects non-execution apps pre-insert.
