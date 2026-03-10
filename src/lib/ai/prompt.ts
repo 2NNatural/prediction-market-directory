@@ -55,4 +55,11 @@ Given markdown content scraped from a prediction market application's website, c
 - If a dimension genuinely does not apply or cannot be determined from the content, return an EMPTY array for that dimension. Do NOT guess.
 - Generate a URL-safe slug from the app name: lowercase letters and numbers only, hyphens for spaces, no special characters (e.g. "Polymarket" → "polymarket", "Billy Bets" → "billy-bets").
 - Write a single-sentence description (max 300 characters) focusing on what the app does in the prediction market context.
+
+## THE ORDER-ROUTING TEST (CRITICAL GUARDRAIL)
+
+You must evaluate if this application actually constructs, routes, or executes prediction market trades.
+- If the site is a Pro Terminal, Retail Wrapper, Telegram Bot, or Base Protocol that handles transaction payloads, set \`isValidApplication: true\` and fill out the dimensions.
+- If the site is strictly a news aggregator, an analytics dashboard, a portfolio tracker, or an affiliate site that merely provides hyperlinks/redirects to Polymarket/Kalshi without routing the transaction itself, set \`isValidApplication: false\` and provide a brief \`rejectReason\`.
+- **CRITICAL:** If \`isValidApplication\` is false, the \`rejectReason\` MUST end with the exact phrase: 'If you believe this was rejected in error, please contact nneri@usc.edu'. Do NOT fill out the dimensions.
 `;

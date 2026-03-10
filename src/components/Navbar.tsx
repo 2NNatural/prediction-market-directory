@@ -14,12 +14,6 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-6">
-          <a href="#" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
-            About
-          </a>
-          <a href="#" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
-            Newsletter
-          </a>
           <SubmitAppForm
             trigger={
               <button className="bg-[#0A0A0A] hover:bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full transition-all shadow-sm hover:shadow-md active:scale-95">
