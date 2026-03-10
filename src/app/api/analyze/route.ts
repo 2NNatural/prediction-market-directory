@@ -28,18 +28,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required field: url' }, { status: 400 });
   }
 
-  const url = ((body as Record<string, unknown>).url as string).trim();
+  const rawUrl = ((body as Record<string, unknown>).url as string).trim();
 
-  if (!url) {
+  if (!rawUrl) {
     return NextResponse.json({ error: 'URL cannot be empty' }, { status: 400 });
   }
 
-  // Validate URL format early
+  // Validate URL format and normalize (strip trailing slashes for dedup)
+  let url: string;
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(rawUrl);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return NextResponse.json({ error: 'Only http and https URLs are supported' }, { status: 400 });
     }
+    url = parsed.origin + parsed.pathname.replace(/\/+$/, '') + parsed.search + parsed.hash;
   } catch {
     return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
   }
@@ -66,7 +68,8 @@ export async function POST(request: NextRequest) {
   if (existing) {
     return NextResponse.json(
       {
-        error: `This application already exists in the directory as "${existing.name}" (status: ${existing.status}).`,
+        message: 'Skipped: Application already exists.',
+        reason: 'This URL has already been submitted to the directory. If you believe this was rejected in error, please contact nneri@usc.edu',
         existing,
       },
       { status: 409 }
@@ -108,6 +111,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Step 2b: Order-Routing Test — reject sites that don't execute trades
+  if (!analysis.isValidApplication) {
+    console.log(`[analyze] Rejected: ${url}`);
+    console.log(`[analyze] Reason: ${analysis.rejectReason}`);
+    return NextResponse.json(
+      { message: 'Skipped: Not a valid execution app', reason: analysis.rejectReason },
+      { status: 200 }
+    );
+  }
+
+  const dimensions = analysis.dimensions!;
+
   // Step 3: Handle slug collisions
   let slug = analysis.slug;
   const { data: slugExists } = await supabase
@@ -131,11 +146,11 @@ export async function POST(request: NextRequest) {
       description: analysis.description,
       url,
       logo_url: null,
-      content_tags: analysis.content_tags,
-      instrument_tags: analysis.instrument_tags,
-      execution_tags: analysis.execution_tags,
-      interface_tags: analysis.interface_tags,
-      resolution_tags: analysis.resolution_tags,
+      content_tags: dimensions.content_tags,
+      instrument_tags: dimensions.instrument_tags,
+      execution_tags: dimensions.execution_tags,
+      interface_tags: dimensions.interface_tags,
+      resolution_tags: dimensions.resolution_tags,
       status: 'pending',
     })
     .select()

@@ -18,6 +18,7 @@ type SubmitState =
   | { phase: 'idle' }
   | { phase: 'loading' }
   | { phase: 'success'; app: Application }
+  | { phase: 'rejected'; reason: string }
   | { phase: 'error'; message: string };
 
 interface SubmitAppFormProps {
@@ -51,6 +52,12 @@ export function SubmitAppForm({ trigger }: SubmitAppFormProps = {}) {
 
       if (!res.ok) {
         setState({ phase: 'error', message: json.error ?? 'An unexpected error occurred.' });
+        return;
+      }
+
+      // Order-Routing Test rejection: 200 but no application (site doesn't execute trades)
+      if (!json.application) {
+        setState({ phase: 'rejected', reason: json.reason ?? json.message ?? 'This site was not recognized as a valid prediction market application.' });
         return;
       }
 
@@ -110,6 +117,10 @@ export function SubmitAppForm({ trigger }: SubmitAppFormProps = {}) {
 
             {state.phase === 'error' && (
               <p className="text-sm text-destructive">{state.message}</p>
+            )}
+
+            {state.phase === 'rejected' && (
+              <p className="text-sm text-amber-600">{state.reason}</p>
             )}
           </form>
         ) : (
