@@ -1,6 +1,7 @@
 import { parseSearchParams } from '@/lib/utils';
 import { fetchApplications } from '@/lib/queries/applications';
 import { FilterSidebar } from '@/components/directory/FilterSidebar';
+import { MobileFilterSheet } from '@/components/directory/MobileFilterSheet';
 import { AppGrid } from '@/components/directory/AppGrid';
 import type { FilterState } from '@/types';
 
@@ -15,7 +16,7 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-8 flex gap-12">
-      {/* Sidebar */}
+      {/* Desktop sidebar — hidden on mobile */}
       <FilterSidebar activeFilters={filters} />
 
       {/* Main content */}
@@ -28,6 +29,8 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
             <p className="text-gray-500 font-medium">
               {applications.length} application{applications.length !== 1 ? 's' : ''} found
             </p>
+            {/* Mobile filter trigger — hidden on desktop */}
+            <MobileFilterSheet activeFilters={filters} />
           </div>
         </div>
 
