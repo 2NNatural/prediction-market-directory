@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { DIMENSION_CONFIGS } from '@/types';
 import type { Application, FilterState, DimensionKey } from '@/types';
+import { AppDetailModal } from './AppDetailModal';
 
 const DIMENSION_TO_FIELD: Record<DimensionKey, keyof Application> = {
   content: 'content_tags',
@@ -19,6 +20,7 @@ interface AppCardProps {
 
 export function AppCard({ application, activeFilters }: AppCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const domain = application.url
     ? (() => { try { return new URL(application.url!).hostname; } catch { return null; } })()
@@ -34,7 +36,11 @@ export function AppCard({ application, activeFilters }: AppCardProps) {
   );
 
   return (
-    <article className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 group flex flex-col h-full">
+    <>
+    <article
+      onClick={() => setModalOpen(true)}
+      className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 group flex flex-col h-full cursor-pointer"
+    >
       {/* Header row */}
       <div className="flex items-start justify-between mb-4">
         {/* Logo / favicon */}
@@ -118,5 +124,11 @@ export function AppCard({ application, activeFilters }: AppCardProps) {
         </div>
       )}
     </article>
+    <AppDetailModal
+      application={application}
+      open={modalOpen}
+      onOpenChange={setModalOpen}
+    />
+    </>
   );
 }
