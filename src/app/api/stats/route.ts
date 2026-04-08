@@ -1,51 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-interface OIProtocol {
+interface DefiLlamaProtocol {
+  slug: string;
+  name: string;
+  tvl: number;
+  chains: string[];
+}
+
+interface FeesProtocol {
   slug: string;
   name: string;
   displayName: string;
   total24h: number | null;
-  change_1d: number | null;
-  change_7d: number | null;
+  total30d: number | null;
+  revenue24h?: number | null;
+  revenue30d?: number | null;
   chains: string[];
 }
 
-let oiCache: { data: OIProtocol[]; timestamp: number } | null = null;
+let protocolsCache: { data: DefiLlamaProtocol[]; timestamp: number } | null = null;
+let feesCache: { data: FeesProtocol[]; timestamp: number } | null = null;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 function normalize(s: string): string {
   return s.toLowerCase().replace(/[-_\s.]/g, '');
 }
 
-async function fetchOIProtocols(): Promise<OIProtocol[]> {
-  if (oiCache && Date.now() - oiCache.timestamp < CACHE_TTL) {
-    return oiCache.data;
+async function fetchProtocolsList(): Promise<DefiLlamaProtocol[]> {
+  if (protocolsCache && Date.now() - protocolsCache.timestamp < CACHE_TTL) {
+    return protocolsCache.data;
   }
-  const res = await fetch('https://api.llama.fi/overview/open-interest');
+  const res = await fetch('https://api.llama.fi/protocols');
+  if (!res.ok) return [];
+  const data = await res.json();
+  protocolsCache = { data, timestamp: Date.now() };
+  return data;
+}
+
+async function fetchFeesOverview(): Promise<FeesProtocol[]> {
+  if (feesCache && Date.now() - feesCache.timestamp < CACHE_TTL) {
+    return feesCache.data;
+  }
+  const res = await fetch('https://api.llama.fi/overview/fees');
   if (!res.ok) return [];
   const data = await res.json();
   const protocols = data.protocols ?? [];
-  oiCache = { data: protocols, timestamp: Date.now() };
+  feesCache = { data: protocols, timestamp: Date.now() };
   return protocols;
 }
 
-function findProtocol(protocols: OIProtocol[], slug: string): OIProtocol | undefined {
-  // Exact slug match
-  const exact = protocols.find((p) => p.slug === slug);
+function findBySlug<T extends { slug: string; name: string }>(list: T[], slug: string): T | undefined {
+  const exact = list.find((p) => p.slug === slug);
   if (exact) return exact;
 
-  // Normalized slug match
   const normalizedSlug = normalize(slug);
-  const byNormSlug = protocols.find((p) => normalize(p.slug) === normalizedSlug);
+  const byNormSlug = list.find((p) => normalize(p.slug) === normalizedSlug);
   if (byNormSlug) return byNormSlug;
 
-  // Normalized name match
-  const byName = protocols.find((p) => normalize(p.name) === normalizedSlug);
+  const byName = list.find((p) => normalize(p.name) === normalizedSlug);
   if (byName) return byName;
-
-  // Normalized displayName match
-  const byDisplay = protocols.find((p) => normalize(p.displayName ?? '') === normalizedSlug);
-  if (byDisplay) return byDisplay;
 
   return undefined;
 }
@@ -57,11 +70,6 @@ function formatUsd(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
-function formatChange(value: number): string {
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
-}
-
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get('slug');
   if (!slug) {
@@ -69,19 +77,43 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const protocols = await fetchOIProtocols();
-    const match = findProtocol(protocols, slug);
+    // Fetch TVL protocols and fees data in parallel
+    const [protocols, feesProtocols] = await Promise.all([
+      fetchProtocolsList(),
+      fetchFeesOverview(),
+    ]);
 
-    if (!match || match.total24h === null) {
+    const tvlMatch = findBySlug(protocols, slug);
+    const feesMatch = findBySlug(feesProtocols, slug);
+
+    if (!tvlMatch && !feesMatch) {
       return NextResponse.json({ found: false });
+    }
+
+    // Get detailed fees/revenue from the per-protocol endpoint
+    let fees24h: number | null = feesMatch?.total24h ?? null;
+    let revenue24h: number | null = null;
+
+    if (tvlMatch || feesMatch) {
+      const feesSlug = feesMatch?.slug ?? tvlMatch?.slug;
+      try {
+        const detailRes = await fetch(`https://api.llama.fi/summary/fees/${feesSlug}`);
+        if (detailRes.ok) {
+          const detail = await detailRes.json();
+          fees24h = detail.total24h ?? fees24h;
+          revenue24h = detail.revenue24h ?? null;
+        }
+      } catch {
+        // use overview data as fallback
+      }
     }
 
     return NextResponse.json({
       found: true,
-      openInterest: formatUsd(match.total24h),
-      change24h: match.change_1d !== null ? formatChange(match.change_1d) : null,
-      change7d: match.change_7d !== null ? formatChange(match.change_7d) : null,
-      chains: match.chains ?? [],
+      tvl: tvlMatch ? formatUsd(tvlMatch.tvl) : null,
+      fees24h: fees24h !== null ? formatUsd(fees24h) : null,
+      revenue24h: revenue24h !== null ? formatUsd(revenue24h) : null,
+      chains: tvlMatch?.chains ?? feesMatch?.chains ?? [],
     });
   } catch {
     return NextResponse.json({ found: false });

@@ -20,9 +20,9 @@ const DIMENSION_TO_FIELD: Record<DimensionKey, keyof Application> = {
 
 interface StatsData {
   found: boolean;
-  openInterest?: string;
-  change24h?: string | null;
-  change7d?: string | null;
+  tvl?: string | null;
+  fees24h?: string | null;
+  revenue24h?: string | null;
   chains?: string[];
 }
 
@@ -138,20 +138,22 @@ export function AppDetailModal({ application, open, onOpenChange }: AppDetailMod
             </div>
           ) : stats?.found ? (
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-gray-500">Open Interest</p>
-                <p className="text-sm font-semibold text-gray-900">{stats.openInterest}</p>
-              </div>
-              {stats.change24h && (
+              {stats.tvl && (
                 <div>
-                  <p className="text-xs text-gray-500">24h Change</p>
-                  <p className={`text-sm font-semibold ${stats.change24h.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stats.change24h}</p>
+                  <p className="text-xs text-gray-500">TVL</p>
+                  <p className="text-sm font-semibold text-gray-900">{stats.tvl}</p>
                 </div>
               )}
-              {stats.change7d && (
+              {stats.fees24h && (
                 <div>
-                  <p className="text-xs text-gray-500">7d Change</p>
-                  <p className={`text-sm font-semibold ${stats.change7d.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stats.change7d}</p>
+                  <p className="text-xs text-gray-500">Fees (24h)</p>
+                  <p className="text-sm font-semibold text-gray-900">{stats.fees24h}</p>
+                </div>
+              )}
+              {stats.revenue24h && (
+                <div>
+                  <p className="text-xs text-gray-500">Revenue (24h)</p>
+                  <p className="text-sm font-semibold text-gray-900">{stats.revenue24h}</p>
                 </div>
               )}
               {stats.chains && stats.chains.length > 0 && (
