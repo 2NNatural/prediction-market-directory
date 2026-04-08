@@ -26,13 +26,14 @@ Protected route to approve/reject pending submissions without touching Supabase 
 ## [SOON] — Do These Next
 
 ### App detail page (`/directory/[slug]`)
-- Server component fetching single app by slug
-- Full description, all tags with dimension labels
-- External link button
+The modal covers expanded view, but a dedicated page would add:
+- Shareable URL per app
+- SEO / social previews (OG tags)
 - "Related apps" section (apps sharing ≥1 tag in any dimension)
+- More room for stats, history, or external links
 
 ### Wire up Navbar links
-"About" and "Newsletter" links were removed from the Navbar this session. When ready to add them back (or replace with real content), build or link out to actual pages/forms.
+"About" and "Newsletter" links were removed from the Navbar in Session 5. When ready to add them back (or replace with real content), build or link out to actual pages/forms.
 
 ---
 
@@ -79,3 +80,5 @@ Only needed once deployed and getting real traffic.
 - ~~Mobile responsive filter sidebar~~ — Completed 2026-03-09. shadcn Sheet drawer on mobile.
 - ~~Bulk seed script~~ — Completed 2026-03-09. `scripts/bulk-seed.ts`.
 - ~~Order-Routing Test guardrail~~ — Completed 2026-03-09. AI rejects non-execution apps pre-insert.
+- ~~App detail modal~~ — Completed 2026-04-07. Click-to-expand card showing full description, tags by dimension, DeFiLlama stats (TVL, Fees, Revenue).
+- ~~DeFiLlama stats integration~~ — Completed 2026-04-07. `/api/stats` route fetching TVL, Fees (24h), Revenue (24h), Chains.

@@ -2,7 +2,6 @@
 
 **Upload this file at the start of every new Claude session to restore full context.**
 
-For the full technical spec, architecture decisions, and taxonomy details, see [CLAUDE.md](CLAUDE.md).
 For what's been built, see [PROGRESS.md](PROGRESS.md).
 For what comes next, see [ROADMAP.md](ROADMAP.md).
 
@@ -35,7 +34,7 @@ USC student in Los Angeles. Strong interest in crypto/Web3. Attended ETHDenver. 
 
 > "I will be using this thread for several months of work and want to ensure you retain maximal context."
 
-Keep CONTEXT.md, PROGRESS.md, ROADMAP.md, and CLAUDE.md up to date at the end of every work session. These files ARE the memory.
+Keep CONTEXT.md, PROGRESS.md, and ROADMAP.md up to date at the end of every work session. These files ARE the memory.
 
 > "I am skipping airtable building right now actually."
 
@@ -63,9 +62,11 @@ Always confirm the working directory context. Working directory: `/Users/noahner
 
 ---
 
-## API Route Name — Critical Note
+## API Route Names — Critical Notes
 
 The scraping/classification route is at **`/api/analyze`** (file: `src/app/api/analyze/route.ts`). The user has referred to it as `/api/scrape` in mission briefs. There is **no `/api/scrape` route** — it does not exist. Always use `/api/analyze`.
+
+The stats route is at **`/api/stats`** (file: `src/app/api/stats/route.ts`). Takes `?slug=<slug>` query param. Returns DeFiLlama protocol stats (TVL, Fees, Revenue, Chains).
 
 ---
 
@@ -87,6 +88,7 @@ The scraping/classification route is at **`/api/analyze`** (file: `src/app/api/a
 | Deployment target | Vercel | — |
 | Scraping | jina.ai reader (no dependency) | — |
 | Script runner | tsx (via npx, no install) | — |
+| Protocol Stats | DeFiLlama free API (no dependency) | — |
 | Future visualization | react-force-graph-2d | not installed yet |
 
 **shadcn components installed:** badge, card, checkbox, scroll-area, separator, button, input, dialog, sheet
@@ -136,7 +138,7 @@ The single source of truth for valid tag values is `src/types/index.ts`. DB CHEC
 
 **Service role client for INSERT** — RLS allows public SELECT only. API route uses `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `NEXT_PUBLIC_`) via `src/lib/supabase/service.ts`.
 
-**Favicon via Google API, no Next.js Image** — AppCard uses plain `<img>` with `src=https://www.google.com/s2/favicons?domain=${domain}&sz=128` and `onError` letter fallback. Deliberately avoids Next.js `<Image>` to skip needing domain allowlisting in `next.config.ts`.
+**Favicon via Google API, no Next.js Image** — AppCard and AppDetailModal use plain `<img>` with `src=https://www.google.com/s2/favicons?domain=${domain}&sz=128` and `onError` letter fallback. Deliberately avoids Next.js `<Image>` to skip needing domain allowlisting in `next.config.ts`.
 
 **SubmitAppForm trigger prop pattern** — `SubmitAppForm` accepts an optional `trigger?: React.ReactNode`. If provided, wraps it in `<DialogTrigger asChild>`. If not, renders the default pill button. All dialog logic stays in one component; any element in the app can open it.
 
@@ -151,6 +153,12 @@ The single source of truth for valid tag values is `src/types/index.ts`. DB CHEC
 **Mobile filter sheet** — `MobileFilterSheet.tsx` uses URL-driven filter state (same as desktop sidebar), so no state-lifting is needed. Both components stay in sync via URL params automatically. Sheet closes after each filter toggle to show results immediately.
 
 **Bulk seed script** — `scripts/bulk-seed.ts` calls the same `/api/analyze` API route that the frontend uses. All safeguards (duplicate check, rate limiting, Order-Routing Test) apply identically. Run with `npx tsx scripts/bulk-seed.ts` while dev server is running. Logs 4 outcomes: ✓ Accepted, ↷ Skipped, ↷ Duplicate, ✗ Failed.
+
+**App detail modal (not full page)** — User chose a modal/dialog overlay over a dedicated `/directory/[slug]` page. Clicking a card opens a shadcn Dialog showing: full description (no truncation), tags grouped by dimension with section headings, and DeFiLlama protocol stats. The modal is a controlled component — AppCard manages `open` state, external link icon has `stopPropagation` so it doesn't trigger the modal.
+
+**DeFiLlama free API for protocol stats** — `/api/stats` route matches app slugs against DeFiLlama's protocol index using exact → normalized slug → normalized name fallback. Two endpoints fetched in parallel: `/protocols` for TVL, `/overview/fees` for fees. Per-protocol detail from `/summary/fees/{slug}` for revenue. Both lists cached 10 minutes in-memory. Graceful fallback ("Protocol stats not available on DeFiLlama") when no match found.
+
+**Stats metric iterations (Session 6)** — Started with TVL + 24h Volume + Monthly Volume. User switched to Open Interest. User switched again to final choice: **TVL, Fees (24h), Revenue (24h), Chain(s)**. The `/api/stats` route and `AppDetailModal` were rewritten each time. Current state reflects the final choice.
 
 ---
 
@@ -170,11 +178,13 @@ src/app/globals.css                             ← Tailwind + shadcn CSS vars +
 src/app/layout.tsx                              ← Root layout: Inter font, Navbar, bg-[#FAFAFA] body
 src/app/directory/page.tsx                      ← Server: reads searchParams, fetches, renders
 src/app/api/analyze/route.ts                    ← POST /api/analyze: normalize URL → dedup → scrape → classify → insert
+src/app/api/stats/route.ts                      ← GET /api/stats?slug=: DeFiLlama TVL + fees + revenue lookup
 src/components/Navbar.tsx                       ← Client: sticky nav with logo + Submit App button only
 src/components/directory/FilterSidebar.tsx      ← Client: desktop-only (hidden lg:block), URL push on toggle
 src/components/directory/FilterGroup.tsx        ← Client: pure Tailwind checkbox list per dimension
 src/components/directory/MobileFilterSheet.tsx  ← Client: mobile-only (lg:hidden), shadcn Sheet drawer
-src/components/directory/AppCard.tsx            ← Client: card with Google favicon + letter fallback, flat tags
+src/components/directory/AppCard.tsx            ← Client: clickable card, opens AppDetailModal, favicon + flat tags
+src/components/directory/AppDetailModal.tsx     ← Client: controlled Dialog — full description, tags by dimension, DeFiLlama stats
 src/components/directory/AppGrid.tsx            ← Server: responsive card grid + SubmitAppForm dashed card
 src/components/directory/SubmitAppForm.tsx      ← Client: dialog with optional trigger prop, handles rejected phase
 scripts/bulk-seed.ts                            ← Script: loops TARGET_URLS, POST to /api/analyze, 5s delay, 4 outcome states
@@ -200,14 +210,16 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 
 ---
 
-## Current Status (as of 2026-03-09)
+## Current Status (as of 2026-04-07)
 
 - Phase 1 (MVP directory): **Complete**
 - Scraping & AI tagging pipeline: **Complete and live**
 - Frontend overhaul: **Complete**
 - Mobile responsive filter: **Complete** — shadcn Sheet drawer on mobile
 - Order-Routing Test guardrail: **Complete** — non-execution apps rejected pre-insert
-- Bulk seed script: **Complete** — `scripts/bulk-seed.ts`, 200 URLs queued and being processed
+- Bulk seed script: **Complete** — `scripts/bulk-seed.ts`, 200 URLs queued and processed
+- App detail modal: **Complete** — click card to expand, shows full description + DeFiLlama stats (TVL, Fees, Revenue)
+- DeFiLlama integration: **Complete** — `/api/stats` route fetching TVL, Fees (24h), Revenue (24h), Chains
 - Deployment: **Live** — https://prediction-market-directory.vercel.app/directory
 - Admin portal: **Not built** — manual approval via Supabase Table Editor
 
@@ -222,6 +234,8 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 - `logo_url` is null for all rows — favicons are derived live from the URL field, not stored
 - `urlCooldowns` Map is not shared across serverless function instances on Vercel
 - jina.ai: if it's down, submissions fail with 502; no fallback
+- DeFiLlama stats only available for protocols in their index — newer/centralized apps won't have data
+- DeFiLlama protocol cache and fees cache are in-memory (10min TTL) — reset on cold start like rate limiting
 
 ---
 

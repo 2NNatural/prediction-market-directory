@@ -1,16 +1,10 @@
 # Prediction Market Directory
 
-A live, filterable, poly-functional map of the prediction market application layer — built so every app can carry multiple tags across 5 independent dimensions simultaneously.
+> "A live and updating map of prediction market application layers."
 
-**Status:** Phase 1 + scraping pipeline + frontend overhaul + mobile responsive + bulk seeding complete. Live deployment exists. Admin portal pending.
+A filterable, poly-functional directory where every prediction market app carries multiple tags across 5 independent dimensions simultaneously. Built for the prediction market research community, DeFi explorers, and anyone trying to understand the current ecosystem.
 
----
-
-## What It Does
-
-A directory where every prediction market app is tagged across 5 dimensions (Content, Instrument, Execution, Interface, Resolution). Users can filter by any combination. Apps can — and should — appear in multiple categories at once.
-
-Built for the prediction market research community, DeFi explorers, and anyone trying to understand the current ecosystem.
+**Status:** Live at [prediction-market-directory.vercel.app](https://prediction-market-directory.vercel.app/directory). App detail modal + DeFiLlama stats complete. Admin portal pending.
 
 ---
 
@@ -19,13 +13,13 @@ Built for the prediction market research community, DeFi explorers, and anyone t
 ### Prerequisites
 - 64-bit Node.js (`node -p "process.arch"` must print `x64`)
 - A Supabase project (free tier)
-- An Anthropic API key (for the AI scraping pipeline)
+- An Anthropic API key (for the AI classification pipeline)
 
 ### Setup
 
 1. **Clone and install**
    ```bash
-   git clone <repo>
+   git clone https://github.com/2NNatural/prediction-market-directory.git
    cd prediction-market-directory
    npm install
    ```
@@ -61,7 +55,6 @@ npx tsx scripts/bulk-seed.ts
 
 | File | Purpose |
 |------|---------|
-| [CLAUDE.md](CLAUDE.md) | AI context doc — full technical spec, architecture decisions, taxonomy |
 | [CONTEXT.md](CONTEXT.md) | Project memory — upload this to start a new Claude session |
 | [PROGRESS.md](PROGRESS.md) | Changelog — what was built, session by session |
 | [ROADMAP.md](ROADMAP.md) | What's next — single canonical priority list |

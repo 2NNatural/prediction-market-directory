@@ -2,6 +2,36 @@
 
 ---
 
+## Session 6 — 2026-04-07 — App Detail Modal + DeFiLlama Stats
+
+### New Files
+| File | What it does |
+|------|-------------|
+| `src/components/directory/AppDetailModal.tsx` | Controlled shadcn Dialog opened by AppCard. Shows: favicon + name + external link header, full untruncated description, tags grouped by dimension (Content/Instrument/Execution/Interface/Resolution) with section headings, and a stats grid fetched from `/api/stats` on mount with loading skeletons. Gracefully shows "Protocol stats not available on DeFiLlama" when no match found. Props: `application`, `open`, `onOpenChange` — parent controls open state. |
+| `src/app/api/stats/route.ts` | GET endpoint taking `?slug=<slug>`. Fetches DeFiLlama `/protocols` for TVL and `/overview/fees` + `/summary/fees/{slug}` for fees/revenue — in parallel. Matches by exact slug → normalized slug → normalized name. Both protocol lists cached 10min in-memory. Returns `{ found, tvl, fees24h, revenue24h, chains }` or `{ found: false }`. |
+
+### Modified Files
+| File | What changed |
+|------|-------------|
+| `src/components/directory/AppCard.tsx` | Card body now clickable with `cursor-pointer`, opens `AppDetailModal` via `useState<boolean>`. Renders `<AppDetailModal>` alongside the `<article>` in a fragment. External link icon already had `onClick={(e) => e.stopPropagation()}` so it navigates directly without triggering the modal. |
+
+### Implementation Decisions
+- **Modal overlay, not full page** — User chose modal/dialog when asked. Stays on directory page, no URL navigation. Faster UX, no need for a `/directory/[slug]` route (yet).
+- **DeFiLlama free API** — No API key needed, no cost. `/protocols` for TVL, `/overview/fees` for fees list, `/summary/fees/{slug}` for per-protocol revenue detail. All free endpoints.
+- **Metric iterations** — Started with TVL + 24h Volume + Monthly Volume (from `/overview/dexs`). User switched to Open Interest (from `/overview/open-interest`). User switched again to final: **TVL, Fees (24h), Revenue (24h)**. Route and modal rewritten each time. Three commits total for this feature.
+- **Slug matching** — Uses the app's `slug` field from our DB (not the URL domain) to match against DeFiLlama. Exact match first, then normalized (lowercase, strip hyphens/spaces/dots).
+- **10-minute cache** — Both the full protocols list and fees overview list are cached in-memory with a 10-minute TTL. Per-protocol fees detail (`/summary/fees/{slug}`) is fetched fresh each request.
+- **Stats section always shows** — Even if DeFiLlama has no data, the section renders with a muted "not available" message rather than hiding entirely.
+
+### Commits
+- `3e54b3d` — Initial modal + stats (TVL + volume)
+- `3bc5fd7` — Switched to Open Interest
+- `e708e73` — Final: switched to TVL + Fees + Revenue
+
+**TypeScript check:** `npx tsc --noEmit` — no errors after each commit.
+
+---
+
 ## Session 5 — 2026-03-09 — Bulk Seeding, Order-Routing Test, Mobile Responsive
 
 ### New Files
@@ -108,3 +138,5 @@
 | `logo_url` not stored | Low | Favicons derived live from URL via Google API; `logo_url` null for all rows |
 | jina.ai dependency | Medium | If jina.ai is down, submissions fail with 502; no fallback |
 | No email on approval | Low | Users don't know when their submission is approved |
+| DeFiLlama coverage gaps | Low | Newer/centralized prediction markets may not be in DeFiLlama's index |
+| DeFiLlama cache is in-memory | Low | Resets on cold start like rate limiting; not a problem at current scale |
