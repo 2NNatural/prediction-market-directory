@@ -20,9 +20,9 @@ const DIMENSION_TO_FIELD: Record<DimensionKey, keyof Application> = {
 
 interface StatsData {
   found: boolean;
-  tvl?: string;
-  volume24h?: string | null;
-  volumeMonthly?: string | null;
+  openInterest?: string;
+  change24h?: string | null;
+  change7d?: string | null;
   chains?: string[];
 }
 
@@ -129,7 +129,7 @@ export function AppDetailModal({ application, open, onOpenChange }: AppDetailMod
           </h4>
           {statsLoading ? (
             <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="space-y-1.5">
                   <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
                   <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
@@ -139,19 +139,19 @@ export function AppDetailModal({ application, open, onOpenChange }: AppDetailMod
           ) : stats?.found ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-gray-500">TVL</p>
-                <p className="text-sm font-semibold text-gray-900">{stats.tvl}</p>
+                <p className="text-xs text-gray-500">Open Interest</p>
+                <p className="text-sm font-semibold text-gray-900">{stats.openInterest}</p>
               </div>
-              {stats.volume24h && (
+              {stats.change24h && (
                 <div>
-                  <p className="text-xs text-gray-500">24h Volume</p>
-                  <p className="text-sm font-semibold text-gray-900">{stats.volume24h}</p>
+                  <p className="text-xs text-gray-500">24h Change</p>
+                  <p className={`text-sm font-semibold ${stats.change24h.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stats.change24h}</p>
                 </div>
               )}
-              {stats.volumeMonthly && (
+              {stats.change7d && (
                 <div>
-                  <p className="text-xs text-gray-500">Monthly Volume</p>
-                  <p className="text-sm font-semibold text-gray-900">{stats.volumeMonthly}</p>
+                  <p className="text-xs text-gray-500">7d Change</p>
+                  <p className={`text-sm font-semibold ${stats.change7d.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{stats.change7d}</p>
                 </div>
               )}
               {stats.chains && stats.chains.length > 0 && (
