@@ -83,7 +83,7 @@ export function NetworkGraph({ apps, onNodeClick }: NetworkGraphProps) {
   const [mounted, setMounted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ContentTag | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink>>(undefined);
 
@@ -272,27 +272,30 @@ export function NetworkGraph({ apps, onNodeClick }: NetworkGraphProps) {
         className="w-full rounded-lg border border-gray-200 bg-[#FAFAFA] overflow-hidden"
         style={{ height: 'calc(100vh - 340px)', minHeight: 400 }}
       >
-        <ForceGraph2D
-          ref={fgRef as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
-          graphData={graphData}
-          width={dimensions.width}
-          height={dimensions.height}
-          backgroundColor="transparent"
-          nodeLabel=""
-          nodeCanvasObjectMode={() => 'replace'}
-          nodeCanvasObject={nodeCanvasObject}
-          nodePointerAreaPaint={nodePointerAreaPaint}
-          onNodeClick={handleNodeClick}
-          onNodeHover={handleNodeHover}
-          linkColor={() => 'rgba(0,0,0,0.08)'}
-          linkWidth={0.5}
-          linkLineDash={() => [4, 4]}
-          d3AlphaDecay={0.02}
-          d3VelocityDecay={0.3}
-          cooldownTicks={100}
-          warmupTicks={50}
-          enableNodeDrag={true}
-        />
+        {dimensions.width > 0 && dimensions.height > 0 && (
+          <ForceGraph2D
+            key={`${dimensions.width}-${dimensions.height}`}
+            ref={fgRef as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
+            graphData={graphData}
+            width={dimensions.width}
+            height={dimensions.height}
+            backgroundColor="transparent"
+            nodeLabel=""
+            nodeCanvasObjectMode={() => 'replace'}
+            nodeCanvasObject={nodeCanvasObject}
+            nodePointerAreaPaint={nodePointerAreaPaint}
+            onNodeClick={handleNodeClick}
+            onNodeHover={handleNodeHover}
+            linkColor={() => 'rgba(0,0,0,0.08)'}
+            linkWidth={0.5}
+            linkLineDash={() => [4, 4]}
+            d3AlphaDecay={0.02}
+            d3VelocityDecay={0.3}
+            cooldownTicks={100}
+            warmupTicks={50}
+            enableNodeDrag={true}
+          />
+        )}
       </div>
 
       {/* Bottom bar */}
