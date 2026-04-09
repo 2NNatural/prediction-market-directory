@@ -3,7 +3,8 @@ import { fetchApplications } from '@/lib/queries/applications';
 import { FilterSidebar } from '@/components/directory/FilterSidebar';
 import { MobileFilterSheet } from '@/components/directory/MobileFilterSheet';
 import { SearchBar } from '@/components/directory/SearchBar';
-import { AppGrid } from '@/components/directory/AppGrid';
+import { ViewToggle } from '@/components/directory/ViewToggle';
+import { DirectoryClient } from '@/components/directory/DirectoryClient';
 import type { FilterState } from '@/types';
 
 interface PageProps {
@@ -14,6 +15,7 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
   const rawParams = await searchParams;
   const filters: FilterState = parseSearchParams(rawParams);
   const search = typeof rawParams.q === 'string' ? rawParams.q : undefined;
+  const view = typeof rawParams.view === 'string' ? rawParams.view : 'grid';
   const applications = await fetchApplications(filters, search);
 
   return (
@@ -36,10 +38,13 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
               <MobileFilterSheet activeFilters={filters} />
             </div>
           </div>
-          <SearchBar />
+          <div className="flex items-center gap-3">
+            <SearchBar />
+            <ViewToggle />
+          </div>
         </div>
 
-        <AppGrid applications={applications} activeFilters={filters} />
+        <DirectoryClient applications={applications} activeFilters={filters} view={view} />
 
         <div className="mt-12 text-center pb-8">
           <p className="text-sm text-gray-400">
