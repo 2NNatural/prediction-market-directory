@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { Application, FilterState } from '@/types';
 
-export async function fetchApplications(filters: FilterState, search?: string): Promise<Application[]> {
+export async function fetchApplications(filters: FilterState): Promise<Application[]> {
   const supabase = await createSupabaseServerClient();
 
   let query = supabase
@@ -26,10 +26,6 @@ export async function fetchApplications(filters: FilterState, search?: string): 
   }
   if (filters.resolution.length > 0) {
     query = query.overlaps('resolution_tags', filters.resolution);
-  }
-
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
   }
 
   const { data, error } = await query;
