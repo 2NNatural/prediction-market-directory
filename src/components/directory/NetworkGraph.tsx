@@ -235,8 +235,6 @@ export function NetworkGraph({ apps, onNodeClick }: NetworkGraphProps) {
     [],
   );
 
-  if (!mounted) return null;
-
   return (
     <div className="flex flex-col gap-0">
       {/* Category tabs */}
@@ -272,7 +270,7 @@ export function NetworkGraph({ apps, onNodeClick }: NetworkGraphProps) {
         className="w-full rounded-lg border border-gray-200 bg-[#FAFAFA] overflow-hidden"
         style={{ height: 'calc(100vh - 340px)', minHeight: 400 }}
       >
-        {dimensions.width > 0 && dimensions.height > 0 && (
+        {mounted && dimensions.width > 0 && dimensions.height > 0 && (
           <ForceGraph2D
             key={`${dimensions.width}-${dimensions.height}`}
             ref={fgRef as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
