@@ -2,6 +2,7 @@ import { parseSearchParams } from '@/lib/utils';
 import { fetchApplications } from '@/lib/queries/applications';
 import { FilterSidebar } from '@/components/directory/FilterSidebar';
 import { MobileFilterSheet } from '@/components/directory/MobileFilterSheet';
+import { SearchBar } from '@/components/directory/SearchBar';
 import { AppGrid } from '@/components/directory/AppGrid';
 import type { FilterState } from '@/types';
 
@@ -12,7 +13,8 @@ interface PageProps {
 export default async function DirectoryPage({ searchParams }: PageProps) {
   const rawParams = await searchParams;
   const filters: FilterState = parseSearchParams(rawParams);
-  const applications = await fetchApplications(filters);
+  const search = typeof rawParams.q === 'string' ? rawParams.q : undefined;
+  const applications = await fetchApplications(filters, search);
 
   return (
     <div className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-8 flex gap-12">
@@ -21,17 +23,20 @@ export default async function DirectoryPage({ searchParams }: PageProps) {
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8 pb-6 border-b border-gray-200">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A] mb-2">
-              Prediction Market Directory
-            </h1>
-            <p className="text-gray-500 font-medium">
-              {applications.length} application{applications.length !== 1 ? 's' : ''} found
-            </p>
-            {/* Mobile filter trigger — hidden on desktop */}
-            <MobileFilterSheet activeFilters={filters} />
+        <div className="flex flex-col gap-4 mb-8 pb-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A] mb-2">
+                Prediction Market Directory
+              </h1>
+              <p className="text-gray-500 font-medium">
+                {applications.length} application{applications.length !== 1 ? 's' : ''} found
+              </p>
+              {/* Mobile filter trigger — hidden on desktop */}
+              <MobileFilterSheet activeFilters={filters} />
+            </div>
           </div>
+          <SearchBar />
         </div>
 
         <AppGrid applications={applications} activeFilters={filters} />
