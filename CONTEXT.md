@@ -89,9 +89,12 @@ The stats route is at **`/api/stats`** (file: `src/app/api/stats/route.ts`). Tak
 | Scraping | jina.ai reader (no dependency) | — |
 | Script runner | tsx (via npx, no install) | — |
 | Protocol Stats | DeFiLlama free API (no dependency) | — |
-| Future visualization | react-force-graph-2d | not installed yet |
+| Network graph | react-force-graph-2d | ^1 |
+| Force simulation | d3-force | ^3 |
 
 **shadcn components installed:** badge, card, checkbox, scroll-area, separator, button, input, dialog, sheet
+
+**New packages (Session 7):** `react-force-graph-2d`, `d3-force`, `@types/d3-force`
 
 **AI Model in use:** `claude-sonnet-4-5` via `generateObject`
 
@@ -160,13 +163,21 @@ The single source of truth for valid tag values is `src/types/index.ts`. DB CHEC
 
 **Stats metric iterations (Session 6)** — Started with TVL + 24h Volume + Monthly Volume. User switched to Open Interest. User switched again to final choice: **TVL, Fees (24h), Revenue (24h), Chain(s)**. The `/api/stats` route and `AppDetailModal` were rewritten each time. Current state reflects the final choice.
 
+**Text search with name-priority ranking** — `SearchBar.tsx` is a debounced client component that writes a `q` URL param. The `getApplications()` query function in `applications.ts` accepts an optional `search` param. Ranking: exact name match (case-insensitive) → name starts-with → name contains → description-only match. Implemented via a single Supabase `.or()` filter, then client-side sort by match tier. Search applies to both Grid and Graph views.
+
+**Hub-and-spoke network graph** — `NetworkGraph.tsx` uses `react-force-graph-2d` (dynamic import, `ssr: false`) with `d3-force` for `forceCenter`. Topology: 6 Content tag hubs (one per Content dimension value), app nodes connect to their Content tag hubs only (not to each other). This gives O(n) edges instead of the O(n²) "shared tag" approach that produced an unreadable cluster. Node styling: black circles for apps with white text, larger gray dashed-stroke circles for hubs. Gray dashed edges. Network density stat + legend bar at bottom. Category tabs ("All" + each Content tag) filter the visible subgraph.
+
+**ViewToggle + DirectoryClient pattern** — `ViewToggle.tsx` is a pill toggle (Grid / Graph) that writes a `view` URL param. `DirectoryClient.tsx` is a thin client wrapper that holds modal state and conditionally renders either `AppGrid` or `NetworkGraph` based on the `view` param. The server page (`directory/page.tsx`) reads `q` and `view` from searchParams and passes them down.
+
+**ForceGraph2D SSR handling** — `react-force-graph-2d` requires `window`. Two layers of protection: (1) `DirectoryClient.tsx` uses `next/dynamic` with `ssr: false` to import `NetworkGraph`, (2) inside `NetworkGraph.tsx`, a `mounted` state guard wraps only the `<ForceGraph2D>` component (not the container div) so the container is always in the DOM for `ResizeObserver` to measure. Moving the mount guard to wrap only ForceGraph2D (not the container) was the fix for the blank-graph bug.
+
 ---
 
 ## Key File Map
 
 ```
 src/types/index.ts                               ← SINGLE SOURCE OF TRUTH for all tags and types
-src/lib/queries/applications.ts                 ← Main DB query (filters by status='approved')
+src/lib/queries/applications.ts                 ← Main DB query (filters by status='approved', optional search with name-priority ranking)
 src/lib/supabase/server.ts                      ← Server component Supabase client
 src/lib/supabase/service.ts                     ← Service role client (INSERT, bypasses RLS)
 src/lib/supabase/client.ts                      ← Browser Supabase client
@@ -176,7 +187,7 @@ src/lib/ai/prompt.ts                            ← System prompt with taxonomy 
 src/lib/utils.ts                                ← cn(), parseSearchParams(), buildFilterUrl(), toggleTag()
 src/app/globals.css                             ← Tailwind + shadcn CSS vars + .custom-scrollbar utility
 src/app/layout.tsx                              ← Root layout: Inter font, Navbar, bg-[#FAFAFA] body
-src/app/directory/page.tsx                      ← Server: reads searchParams, fetches, renders
+src/app/directory/page.tsx                      ← Server: reads searchParams (filters, q, view), fetches, renders SearchBar + ViewToggle + DirectoryClient
 src/app/api/analyze/route.ts                    ← POST /api/analyze: normalize URL → dedup → scrape → classify → insert
 src/app/api/stats/route.ts                      ← GET /api/stats?slug=: DeFiLlama TVL + fees + revenue lookup
 src/components/Navbar.tsx                       ← Client: sticky nav with logo + Submit App button only
@@ -187,7 +198,12 @@ src/components/directory/AppCard.tsx            ← Client: clickable card, open
 src/components/directory/AppDetailModal.tsx     ← Client: controlled Dialog — full description, tags by dimension, DeFiLlama stats
 src/components/directory/AppGrid.tsx            ← Server: responsive card grid + SubmitAppForm dashed card
 src/components/directory/SubmitAppForm.tsx      ← Client: dialog with optional trigger prop, handles rejected phase
+src/components/directory/SearchBar.tsx          ← Client: debounced text input, writes `q` URL param
+src/components/directory/NetworkGraph.tsx       ← Client: hub-and-spoke force graph (react-force-graph-2d, dynamic import)
+src/components/directory/ViewToggle.tsx         ← Client: Grid/Graph pill toggle, writes `view` URL param
+src/components/directory/DirectoryClient.tsx    ← Client: thin wrapper — holds modal state, renders AppGrid or NetworkGraph
 scripts/bulk-seed.ts                            ← Script: loops TARGET_URLS, POST to /api/analyze, 5s delay, 4 outcome states
+scripts/seed-batch-2.ts                        ← Script: second batch of 62 URLs for bulk seeding
 supabase/schema.sql                             ← Full DDL
 supabase/seed.sql                               ← Seed apps
 supabase/migrations/add-status-column.sql       ← Migration: adds status column (already run)
@@ -210,7 +226,7 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 
 ---
 
-## Current Status (as of 2026-04-07)
+## Current Status (as of 2026-04-08)
 
 - Phase 1 (MVP directory): **Complete**
 - Scraping & AI tagging pipeline: **Complete and live**
@@ -220,6 +236,9 @@ Get Anthropic key from: console.anthropic.com. Free $5 credit on signup. ~$0.003
 - Bulk seed script: **Complete** — `scripts/bulk-seed.ts`, 200 URLs queued and processed
 - App detail modal: **Complete** — click card to expand, shows full description + DeFiLlama stats (TVL, Fees, Revenue)
 - DeFiLlama integration: **Complete** — `/api/stats` route fetching TVL, Fees (24h), Revenue (24h), Chains
+- Text search: **Complete** — debounced search bar, name-priority ranking (exact > starts-with > contains > description-only)
+- Network graph: **Complete** — hub-and-spoke topology via react-force-graph-2d, Grid/Graph view toggle, category tabs
+- Bulk seed batch 2: **Complete** — 62 URLs processed (16 accepted, 20 skipped, 15 duplicate, 11 failed)
 - Deployment: **Live** — https://prediction-market-directory.vercel.app/directory
 - Admin portal: **Not built** — manual approval via Supabase Table Editor
 

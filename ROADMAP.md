@@ -39,14 +39,6 @@ The modal covers expanded view, but a dedicated page would add:
 
 ## [LATER] — After Core Features Are Solid
 
-### Network graph visualization
-Replace or complement the card grid with `react-force-graph-2d`.
-- Nodes = apps, edges = shared tags within a dimension
-- Node color = primary Interface tag
-- Node size = number of dimensions with tags (complexity proxy)
-- Toggle between "Grid view" and "Graph view"
-- Active `FilterState` drives which subgraph is visible
-
 ### Store favicon / logo in `logo_url`
 Currently favicons are fetched live from Google's API on every card render using the `url` field. `logo_url` is null for all rows.
 Option: at submission time, fetch and store the favicon URL so it persists even if the app's domain changes.
@@ -82,3 +74,6 @@ Only needed once deployed and getting real traffic.
 - ~~Order-Routing Test guardrail~~ — Completed 2026-03-09. AI rejects non-execution apps pre-insert.
 - ~~App detail modal~~ — Completed 2026-04-07. Click-to-expand card showing full description, tags by dimension, DeFiLlama stats (TVL, Fees, Revenue).
 - ~~DeFiLlama stats integration~~ — Completed 2026-04-07. `/api/stats` route fetching TVL, Fees (24h), Revenue (24h), Chains.
+- ~~Text search~~ — Completed 2026-04-08. Debounced search bar with name-priority ranking (exact > starts-with > contains > description-only).
+- ~~Network graph visualization~~ — Completed 2026-04-08. Hub-and-spoke topology via `react-force-graph-2d`. Grid/Graph view toggle. Category tabs filter subgraph.
+- ~~Bulk seed batch 2~~ — Completed 2026-04-08. 62 URLs processed (16 accepted, 20 skipped, 15 duplicate, 11 failed).

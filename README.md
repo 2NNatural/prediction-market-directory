@@ -4,7 +4,7 @@
 
 A filterable, poly-functional directory where every prediction market app carries multiple tags across 5 independent dimensions simultaneously. Built for the prediction market research community, DeFi explorers, and anyone trying to understand the current ecosystem.
 
-**Status:** Live at [prediction-market-directory.vercel.app](https://prediction-market-directory.vercel.app/directory). App detail modal + DeFiLlama stats complete. Admin portal pending.
+**Status:** Live at [prediction-market-directory.vercel.app](https://prediction-market-directory.vercel.app/directory). Text search, network graph, app detail modal, and DeFiLlama stats complete. Admin portal pending.
 
 ---
 

@@ -2,6 +2,46 @@
 
 ---
 
+## Session 7 — 2026-04-08 — Text Search + Network Graph + Bulk Seed Batch 2
+
+### New Files
+| File | What it does |
+|------|-------------|
+| `src/components/directory/SearchBar.tsx` | Debounced client component (300ms). Reads/writes `q` URL param via `useSearchParams`. Renders a text input with search icon. On change, replaces URL with updated `q` param (removes param when empty). |
+| `src/components/directory/NetworkGraph.tsx` | Hub-and-spoke force graph using `react-force-graph-2d` (dynamic import, `ssr: false`). 6 Content tag hubs, app nodes connect to hubs only (not each other) — O(n) edges. Monochrome styling: black app nodes with white text, larger gray dashed-stroke hub circles, gray dashed edges. ResizeObserver tracks container width. Category tabs filter visible subgraph. Network density stat + legend bar at bottom. `mounted` state guard wraps only `<ForceGraph2D>`, not the container div. |
+| `src/components/directory/ViewToggle.tsx` | Grid/Graph pill toggle. Reads/writes `view` URL param. Preserves all other params (filters, search) on toggle. |
+| `src/components/directory/DirectoryClient.tsx` | Thin client wrapper. Dynamically imports `NetworkGraph` with `ssr: false`. Holds modal state. Renders `AppGrid` (default) or `NetworkGraph` based on `view` param. |
+| `scripts/seed-batch-2.ts` | Second bulk seed batch — 62 URLs. Same pattern as `bulk-seed.ts`, calls `/api/analyze` with 5s delay. Results: 16 accepted, 20 skipped (Order-Routing Test), 15 duplicate, 11 failed. |
+
+### Modified Files
+| File | What changed |
+|------|-------------|
+| `src/lib/queries/applications.ts` | Added optional `search` parameter. When provided, applies Supabase `.or()` filter across `name` (ilike) and `description` (ilike). Client-side post-sort by match tier: exact name match → name starts-with → name contains → description-only. |
+| `src/app/directory/page.tsx` | Now reads `q` and `view` from searchParams in addition to filter params. Passes `search` to `getApplications()`. Renders `SearchBar`, `ViewToggle`, and `DirectoryClient` (which conditionally shows grid or graph). |
+
+### Implementation Decisions
+- **Search first, graph second** — User explicitly requested building search before the graph. First attempt combined both and was rolled back (`a6ab7c6`).
+- **Name-priority ranking** — User said "a search for 'Polymarket' currently returns 10+ results related to Polymarket in their description. I want it to return the Polymarket official site as the first result." Solved with 4-tier client-side sort after Supabase filter.
+- **Hub-and-spoke topology, not shared-tag edges** — First graph attempt connected apps sharing any tag, producing O(n²) edges and an unreadable cluster ("overly clustered, with virtually every item connecting to every other item"). Redesigned: 6 Content tag hubs as anchor nodes, apps connect only to their Content hubs. Clean, readable, O(n) edges.
+- **Monochrome graph styling** — User provided a Variant "Market Connectivity" video as design reference. Simplified to: black app nodes, gray hub circles with dashed stroke, gray dashed edges. No color coding by dimension.
+- **Static mockup before production build** — User requested "Preview your solutions and UI before actually implementing." Built a standalone HTML/JS mockup at `graph-preview/index.html` and deployed to Perplexity hosting for approval before touching the codebase.
+- **`mounted` guard placement** — Initially wrapped the entire container div in a `mounted` check, which hid the container from ResizeObserver → dimensions stayed 0×0 → blank graph. Fix: mount guard wraps only `<ForceGraph2D>`, container div always renders.
+
+### Bug Fixes
+- **Canvas not filling width** — `ForceGraph2D` rendered at 0×0 because `containerRef.current.offsetWidth` was 0 on first render. Fixed by adding initial dimension state from `window.innerWidth` and letting ResizeObserver update.
+- **Blank graph after canvas fix** — The `if (!mounted) return null` guard hid the entire component including the container div. ResizeObserver never fired because there was nothing to observe. Fixed by moving the mount guard to wrap only the `<ForceGraph2D>` component, keeping the container div always in the DOM.
+
+### Commits
+- `a6ab7c6` — Reverted bad combined search+graph attempt
+- `377f9f7` — Text search with name-priority ranking
+- `6d10156` — Hub-and-spoke network graph
+- `9f05d19` — Fix graph canvas sizing (initial dimensions)
+- `3d4e3aa` — Fix blank graph (mount guard moved to wrap only ForceGraph2D)
+
+**TypeScript check:** `npx tsc --noEmit` — no errors after each commit.
+
+---
+
 ## Session 6 — 2026-04-07 — App Detail Modal + DeFiLlama Stats
 
 ### New Files
